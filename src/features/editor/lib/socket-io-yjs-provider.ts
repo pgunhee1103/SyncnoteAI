@@ -56,7 +56,6 @@ export class SocketIOYjsProvider {
     this.onSynced = options.onSynced
 
     this.awareness = new Awareness(this.doc)
-    this.awareness.setLocalStateField('user', options.user)
 
     this.join = this.join.bind(this)
     this.handleRemoteUpdate = this.handleRemoteUpdate.bind(this)
@@ -72,6 +71,11 @@ export class SocketIOYjsProvider {
 
     this.doc.on('update', this.handleLocalUpdate)
     this.awareness.on('update', this.handleLocalAwareness)
+
+    this.awareness.setLocalState({
+      user: options.user,
+      cursor: null,
+    })
 
     if (this.socket.connected) {
       this.join()
@@ -98,6 +102,7 @@ export class SocketIOYjsProvider {
     if (!this.synced) {
       this.synced = true
       this.onSynced?.()
+      this.broadcastLocalAwareness()
     }
   }
 
@@ -137,6 +142,15 @@ export class SocketIOYjsProvider {
     ]
 
     const update = encodeAwarenessUpdate(this.awareness, changedClients)
+
+    this.socket.emit(SOCKET_EVENTS.YJS_AWARENESS_UPDATE, {
+      room: this.room,
+      update: Array.from(update),
+    })
+  }
+
+  private broadcastLocalAwareness() {
+    const update = encodeAwarenessUpdate(this.awareness, [this.doc.clientID])
 
     this.socket.emit(SOCKET_EVENTS.YJS_AWARENESS_UPDATE, {
       room: this.room,

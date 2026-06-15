@@ -66,7 +66,7 @@ export function DocumentTitleInput({
   const lastSavedTitleRef = useRef(title || 'Untitled')
   const currentTitleRef = useRef(title || 'Untitled')
 
-  const room = `document:${documentId}:title`
+  const room = `document:${documentId}`
 
   const sharedAccess = useMemo(() => {
     if (!shareId) return undefined

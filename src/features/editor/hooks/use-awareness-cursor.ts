@@ -4,10 +4,39 @@ import { useEffect } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { SocketIOYjsProvider } from '@/features/editor/lib/socket-io-yjs-provider'
 
+type CursorField = 'body' | 'title'
+
+type AwarenessLocalState = {
+  user?: {
+    name?: string
+    color?: string
+  }
+  activeField?: CursorField | null
+  cursor?: {
+    field: CursorField
+    from: number
+    to: number
+  } | null
+}
+
 type Props = {
   editor: Editor | null
   provider: SocketIOYjsProvider | null
-  field: 'body' | 'title'
+  field: CursorField
+}
+
+function isEditorFocused(editor: Editor) {
+  if (editor.isFocused) {
+    return true
+  }
+
+  const activeElement = document.activeElement
+
+  if (!activeElement) {
+    return false
+  }
+
+  return editor.view.dom.contains(activeElement)
 }
 
 export function useAwarenessCursor({ editor, provider, field }: Props) {
@@ -19,16 +48,40 @@ export function useAwarenessCursor({ editor, provider, field }: Props) {
       if (!editor) return
       if (!provider) return
 
-      provider.awareness.setLocalStateField('cursor', {
-        field,
-        from: editor.state.selection.from,
-        to: editor.state.selection.to,
+      // 핵심: focus 없는 editor의 transaction/selectionUpdate는 무시
+      if (!isEditorFocused(editor)) {
+        return
+      }
+
+      const currentState =
+        (provider.awareness.getLocalState() as AwarenessLocalState | null) ?? {}
+
+      provider.awareness.setLocalState({
+        ...currentState,
+        activeField: field,
+        cursor: {
+          field,
+          from: editor.state.selection.from,
+          to: editor.state.selection.to,
+        },
       })
     }
 
     function clearCursor() {
       if (!provider) return
-      provider.awareness.setLocalStateField('cursor', null)
+
+      const currentState =
+        (provider.awareness.getLocalState() as AwarenessLocalState | null) ?? {}
+
+      if (currentState.activeField !== field) {
+        return
+      }
+
+      provider.awareness.setLocalState({
+        ...currentState,
+        activeField: null,
+        cursor: null,
+      })
     }
 
     editor.on('focus', updateCursor)
@@ -41,6 +94,7 @@ export function useAwarenessCursor({ editor, provider, field }: Props) {
       editor.off('selectionUpdate', updateCursor)
       editor.off('transaction', updateCursor)
       editor.off('blur', clearCursor)
+
       clearCursor()
     }
   }, [editor, provider, field])

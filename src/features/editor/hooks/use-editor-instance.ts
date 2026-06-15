@@ -156,7 +156,7 @@ export function useEditorInstance({
   sharedAccess,
   onUpdate,
 }: Props) {
-  const room = `document:${documentId}:body`
+  const room = `document:${documentId}`
   const hasInitializedRef = useRef(false)
   const editorRef = useRef<Editor | null>(null)
 

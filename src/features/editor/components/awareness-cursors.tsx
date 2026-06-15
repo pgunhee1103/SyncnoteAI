@@ -4,13 +4,16 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { SocketIOYjsProvider } from '@/features/editor/lib/socket-io-yjs-provider'
 
+type CursorField = 'body' | 'title'
+
 type AwarenessState = {
   user?: {
     name?: string
     color?: string
   }
+  activeField?: CursorField | null
   cursor?: {
-    field?: 'body' | 'title'
+    field?: CursorField
     from?: number
     to?: number
   } | null
@@ -28,7 +31,7 @@ type CursorItem = {
 type Props = {
   editor: Editor | null
   provider: SocketIOYjsProvider | null
-  field: 'body' | 'title'
+  field: CursorField
 }
 
 export function AwarenessCursors({ editor, provider, field }: Props) {
@@ -63,6 +66,8 @@ export function AwarenessCursors({ editor, provider, field }: Props) {
       const awarenessState = state as AwarenessState
       const cursor = awarenessState.cursor
 
+      // 핵심: activeField와 cursor.field가 모두 현재 field일 때만 렌더링
+      if (awarenessState.activeField !== field) continue
       if (!cursor) continue
       if (cursor.field !== field) continue
       if (typeof cursor.from !== 'number') continue
