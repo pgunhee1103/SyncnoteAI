@@ -17,13 +17,46 @@ type Props = {
   sharedAccess?: SharedAccess
 }
 
+const COLORS = [
+  '#f97316',
+  '#22c55e',
+  '#3b82f6',
+  '#a855f7',
+  '#e11d48',
+  '#14b8a6',
+  '#f59e0b',
+  '#06b6d4',
+  '#84cc16',
+  '#ec4899',
+]
+
 function getSharedKey(sharedAccess?: SharedAccess) {
   if (!sharedAccess) return 'owner'
   return `${sharedAccess.shareId}:${sharedAccess.guestId}:${sharedAccess.guestName}`
 }
 
+function getClientColor(key: string) {
+  if (typeof window === 'undefined') return COLORS[0]
+
+  const storageKey = `syncnote_color:${key}`
+  const stored = window.sessionStorage.getItem(storageKey)
+
+  if (stored) return stored
+
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)]
+  window.sessionStorage.setItem(storageKey, color)
+
+  return color
+}
+
+function getUserName(sharedAccess?: SharedAccess) {
+  if (sharedAccess?.guestName) return sharedAccess.guestName
+  return 'Owner'
+}
+
 export function useYjsProvider({ room, documentId, sharedAccess }: Props) {
-  const key = `${room}:${documentId}:${getSharedKey(sharedAccess)}`
+  const sharedKey = getSharedKey(sharedAccess)
+  const key = `${room}:${documentId}:${sharedKey}`
 
   const ydoc = useMemo(() => {
     return new Y.Doc()
@@ -44,6 +77,10 @@ export function useYjsProvider({ room, documentId, sharedAccess }: Props) {
       documentId,
       doc: ydoc,
       sharedAccess,
+      user: {
+        name: getUserName(sharedAccess),
+        color: getClientColor(key),
+      },
       onSynced: () => {
         if (!mounted) return
         setSynced(true)
@@ -59,7 +96,7 @@ export function useYjsProvider({ room, documentId, sharedAccess }: Props) {
       nextProvider.destroy()
       ydoc.destroy()
     }
-  }, [room, documentId, sharedAccess, ydoc])
+  }, [room, documentId, sharedKey, key, ydoc])
 
   return {
     provider,

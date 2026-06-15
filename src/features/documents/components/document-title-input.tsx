@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { createTiptapExtensions } from '@/features/editor/lib/tiptap-extensions'
 import { useYjsProvider } from '@/features/editor/hooks/use-yjs-provider'
+import { useAwarenessCursor } from '@/features/editor/hooks/use-awareness-cursor'
+import { AwarenessCursors } from '@/features/editor/components/awareness-cursors'
 
 type Props = {
   documentId: string
@@ -123,6 +125,12 @@ export function DocumentTitleInput({
     [ydoc],
   )
 
+  useAwarenessCursor({
+    editor,
+    provider,
+    field: 'title',
+  })
+
   useEffect(() => {
     hasInitializedRef.current = false
     lastSavedTitleRef.current = title || 'Untitled'
@@ -201,7 +209,8 @@ export function DocumentTitleInput({
   }
 
   return (
-    <div className={isSaving ? 'opacity-80' : undefined}>
+    <div className={isSaving ? 'relative opacity-80' : 'relative'}>
+      <AwarenessCursors editor={editor} provider={provider} field="title" />
       <EditorContent editor={editor} />
     </div>
   )

@@ -14,4 +14,5 @@ export const SOCKET_EVENTS = {
   YJS_JOIN: 'yjs:join',
   YJS_LEAVE: 'yjs:leave',
   YJS_SYNC_UPDATE: 'yjs:sync:update',
+  YJS_AWARENESS_UPDATE: 'yjs:awareness:update',
 } as const

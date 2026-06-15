@@ -5,6 +5,7 @@ import { useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
 import { createTiptapExtensions } from '@/features/editor/lib/tiptap-extensions'
 import { useYjsProvider } from '@/features/editor/hooks/use-yjs-provider'
+import { useAwarenessCursor } from '@/features/editor/hooks/use-awareness-cursor'
 import {
   parseEditorContent,
   stringifyEditorContent,
@@ -92,6 +93,7 @@ async function runAI(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        documentId,
         prompt,
         content: editor.getText(),
         shareId: sharedAccess?.shareId,
@@ -156,6 +158,7 @@ export function useEditorInstance({
 }: Props) {
   const room = `document:${documentId}:body`
   const hasInitializedRef = useRef(false)
+  const editorRef = useRef<Editor | null>(null)
 
   const { provider, ydoc, synced } = useYjsProvider({
     room,
@@ -183,17 +186,20 @@ export function useEditorInstance({
             'min-h-[460px] rounded-xl p-4 outline-none prose prose-sm max-w-none',
         },
         handleKeyDown(_view, event) {
-          if (!editor) return false
+          const currentEditor = editorRef.current
+
+          if (!currentEditor) return false
           if (event.key !== 'Enter') return false
           if (event.shiftKey) return false
+          if (event.isComposing) return false
 
-          const command = extractAICommand(editor)
+          const command = extractAICommand(currentEditor)
           if (!command) return false
 
           event.preventDefault()
 
           void runAI(
-            editor,
+            currentEditor,
             documentId,
             command.prompt,
             command.from,
@@ -210,6 +216,22 @@ export function useEditorInstance({
     },
     [ydoc],
   )
+
+  useAwarenessCursor({
+    editor,
+    provider,
+    field: 'body',
+  })
+
+  useEffect(() => {
+    editorRef.current = editor
+
+    return () => {
+      if (editorRef.current === editor) {
+        editorRef.current = null
+      }
+    }
+  }, [editor])
 
   useEffect(() => {
     if (!editor) return
@@ -235,5 +257,8 @@ export function useEditorInstance({
     })
   }, [editor, provider, synced, initialContent])
 
-  return editor
+  return {
+    editor,
+    provider,
+  }
 }

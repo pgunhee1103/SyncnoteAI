@@ -227,11 +227,15 @@ type YjsUpdatePayload = {
   update: number[]
 }
 
+type YjsAwarenessPayload = {
+  room: string
+  update: number[]
+}
+
 const yDocs = new Map<string, Y.Doc>()
 
 function getYDoc(room: string) {
   const existing = yDocs.get(room)
-
   if (existing) return existing
 
   const ydoc = new Y.Doc()
@@ -275,14 +279,8 @@ async function canAccessDocument(
   })
 
   if (!document) return false
-
-  if (userId && document.ownerId === userId) {
-    return true
-  }
-
-  if (shareId && document.shareId === shareId && document.shareCanEdit) {
-    return true
-  }
+  if (userId && document.ownerId === userId) return true
+  if (shareId && document.shareId === shareId && document.shareCanEdit) return true
 
   return false
 }
@@ -331,6 +329,18 @@ export function registerCollaborationHandlers(io: SocketIOServer) {
         update: payload.update,
       })
     })
+
+    socket.on(
+      SOCKET_EVENTS.YJS_AWARENESS_UPDATE,
+      (payload: YjsAwarenessPayload) => {
+        if (!socket.rooms.has(payload.room)) return
+
+        socket.to(payload.room).emit(SOCKET_EVENTS.YJS_AWARENESS_UPDATE, {
+          room: payload.room,
+          update: payload.update,
+        })
+      },
+    )
 
     socket.on(SOCKET_EVENTS.YJS_LEAVE, ({ room }: { room: string }) => {
       socket.leave(room)

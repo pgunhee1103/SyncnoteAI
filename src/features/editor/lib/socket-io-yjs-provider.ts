@@ -1,4 +1,9 @@
 import * as Y from 'yjs'
+import {
+  Awareness,
+  applyAwarenessUpdate,
+  encodeAwarenessUpdate,
+} from 'y-protocols/awareness'
 import type { Socket } from 'socket.io-client'
 import { SOCKET_EVENTS } from '@/server/socket/socket-events'
 
@@ -14,10 +19,19 @@ type Options = {
   documentId: string
   doc: Y.Doc
   sharedAccess?: SharedAccess
+  user: {
+    name: string
+    color: string
+  }
   onSynced?: () => void
 }
 
 type YjsUpdatePayload = {
+  room: string
+  update: number[]
+}
+
+type AwarenessPayload = {
   room: string
   update: number[]
 }
@@ -27,6 +41,7 @@ export class SocketIOYjsProvider {
   room: string
   documentId: string
   doc: Y.Doc
+  awareness: Awareness
   synced = false
 
   private sharedAccess?: SharedAccess
@@ -40,12 +55,23 @@ export class SocketIOYjsProvider {
     this.sharedAccess = options.sharedAccess
     this.onSynced = options.onSynced
 
+    this.awareness = new Awareness(this.doc)
+    this.awareness.setLocalStateField('user', options.user)
+
     this.join = this.join.bind(this)
     this.handleRemoteUpdate = this.handleRemoteUpdate.bind(this)
     this.handleLocalUpdate = this.handleLocalUpdate.bind(this)
+    this.handleRemoteAwareness = this.handleRemoteAwareness.bind(this)
+    this.handleLocalAwareness = this.handleLocalAwareness.bind(this)
 
     this.socket.on(SOCKET_EVENTS.YJS_SYNC_UPDATE, this.handleRemoteUpdate)
+    this.socket.on(
+      SOCKET_EVENTS.YJS_AWARENESS_UPDATE,
+      this.handleRemoteAwareness,
+    )
+
     this.doc.on('update', this.handleLocalUpdate)
+    this.awareness.on('update', this.handleLocalAwareness)
 
     if (this.socket.connected) {
       this.join()
@@ -84,13 +110,56 @@ export class SocketIOYjsProvider {
     })
   }
 
+  private handleRemoteAwareness(payload: AwarenessPayload) {
+    if (payload.room !== this.room) return
+
+    applyAwarenessUpdate(
+      this.awareness,
+      Uint8Array.from(payload.update),
+      this,
+    )
+  }
+
+  private handleLocalAwareness(
+    changes: {
+      added: number[]
+      updated: number[]
+      removed: number[]
+    },
+    origin: unknown,
+  ) {
+    if (origin === this) return
+
+    const changedClients = [
+      ...changes.added,
+      ...changes.updated,
+      ...changes.removed,
+    ]
+
+    const update = encodeAwarenessUpdate(this.awareness, changedClients)
+
+    this.socket.emit(SOCKET_EVENTS.YJS_AWARENESS_UPDATE, {
+      room: this.room,
+      update: Array.from(update),
+    })
+  }
+
   destroy() {
+    this.awareness.setLocalState(null)
+
     this.socket.emit(SOCKET_EVENTS.YJS_LEAVE, {
       room: this.room,
     })
 
     this.socket.off(SOCKET_EVENTS.YJS_SYNC_UPDATE, this.handleRemoteUpdate)
+    this.socket.off(
+      SOCKET_EVENTS.YJS_AWARENESS_UPDATE,
+      this.handleRemoteAwareness,
+    )
     this.socket.off('connect', this.join)
+
     this.doc.off('update', this.handleLocalUpdate)
+    this.awareness.off('update', this.handleLocalAwareness)
+    this.awareness.destroy()
   }
 }

@@ -9,6 +9,7 @@ import { TiptapEditor } from '@/features/editor/components/tiptap-editor'
 import { ImageUploadButton } from '@/features/editor/components/image-upload-button'
 import { ConnectionStatus } from '@/features/collaboration/components/connection-status'
 import { useConnectionStatus } from '@/features/collaboration/hooks/use-connection-status'
+import { CollaboratorsBar } from '@/features/collaboration/components/collaborators-bar'
 
 type SharedAccess = {
   shareId: string
@@ -34,7 +35,7 @@ export function EditorShell({
   const [content, setContent] = useState(initialContent)
   const [serverContent, setServerContent] = useState(initialContent)
 
-  const editor = useEditorInstance({
+  const { editor, provider } = useEditorInstance({
     documentId,
     initialContent: serverContent,
     sharedAccess,
@@ -110,12 +111,16 @@ export function EditorShell({
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">
-          <code className="rounded bg-white px-2 py-1">/ai 요청내용</code> 입력 후 Enter로 AI 실행
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CollaboratorsBar provider={provider} />
+
+          <p className="text-xs text-gray-500">
+            <code className="rounded bg-white px-2 py-1">/ai 요청내용</code> 입력 후 Enter로 AI 실행
+          </p>
+        </div>
       </div>
 
-      <TiptapEditor editor={editor} />
+      <TiptapEditor editor={editor} provider={provider} />
     </div>
   )
 }
