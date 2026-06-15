@@ -1,0 +1,46 @@
+npm install -g pnpm
+pnpm create next-app sync-note-ai
+
+-- 런타임 패키지
+pnpm add @prisma/client@6
+pnpm add @tanstack/react-query
+pnpm add socket.io socket.io-client
+pnpm add zod bcryptjs
+pnpm add cookie
+pnpm add @tiptap/react @tiptap/pm @tiptap/starter-kit
+pnpm add @tiptap/extension-image @tiptap/extension-placeholder
+pnpm add clsx tailwind-merge
+
+-- 개발용 패키지
+pnpm add -D prisma
+pnpm add -D @types/cookie
+
+-- Prisma는 먼저 초기화
+pnpm prisma init --datasource-provider sqlite => .env 파일 생성되는지 확인
+-- 마이그레이션
+pnpm prisma migrate dev --name init
+
+-- 폴더 구조 만들기
+mkdir "src/app/(public)/login"
+
+-- 파일 생성
+New-Item "src/app/(public)/login/page.tsx" -ItemType File -Force
+
+# react-query
+New-Item "src/lib/react-query/query-client.ts" -ItemType File -Force
+
+# server
+New-Item "src/server/db/prisma.ts" -ItemType File -Force
+
+# features
+New-Item "src/features/auth/server/auth.service.ts" -ItemType File -Force
+
+# api
+New-Item "src/app/api/auth/login/route.ts" -ItemType File -Force
+
+# middleware
+New-Item "src/middleware.ts" -ItemType File -Force
+
+# socket.io
+pnpm add socket.io socket.io-client
+pnpm add -D tsx cross-env
