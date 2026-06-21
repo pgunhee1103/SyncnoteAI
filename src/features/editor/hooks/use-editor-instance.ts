@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
-import { useEditor } from '@tiptap/react'
-import type { Editor } from '@tiptap/react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
+import {
+  useEditor,
+  type Editor,
+} from '@tiptap/react'
 import { createTiptapExtensions } from '@/features/editor/lib/tiptap-extensions'
-import { useYjsProvider } from '@/features/editor/hooks/use-yjs-provider'
+import { useDocumentCollaboration } from '@/features/collaboration/components/document-collaboration-provider'
 import { useAwarenessCursor } from '@/features/editor/hooks/use-awareness-cursor'
 import {
   parseEditorContent,
@@ -27,24 +33,40 @@ type Props = {
 const AI_LOADING_TEXT = 'AI 생성 중...'
 
 function extractAICommand(editor: Editor) {
-  const { state } = editor
-  const { $from } = state.selection
+  const { $from } = editor.state.selection
   const parent = $from.parent
   const parentStart = $from.start()
-  const textBeforeCursor = parent.textBetween(0, $from.parentOffset, '\n', '\n')
 
-  const match = textBeforeCursor.match(/(?:^|\s)(\/ai\s+.+)$/)
-  if (!match) return null
+  const textBeforeCursor = parent.textBetween(
+    0,
+    $from.parentOffset,
+    '\n',
+    '\n',
+  )
+
+  const match = textBeforeCursor.match(
+    /(?:^|\s)(\/ai\s+.+)$/,
+  )
+
+  if (!match) {
+    return null
+  }
 
   const fullCommand = match[1]
-  const promptMatch = fullCommand.match(/^\/ai\s+(.+)$/)
-  if (!promptMatch) return null
 
-  const prompt = promptMatch[1].trim()
-  const commandStartOffset = textBeforeCursor.lastIndexOf(fullCommand)
+  const promptMatch = fullCommand.match(
+    /^\/ai\s+(.+)$/,
+  )
+
+  if (!promptMatch) {
+    return null
+  }
+
+  const commandStartOffset =
+    textBeforeCursor.lastIndexOf(fullCommand)
 
   return {
-    prompt,
+    prompt: promptMatch[1].trim(),
     from: parentStart + commandStartOffset,
     to: parentStart + $from.parentOffset,
   }
@@ -55,18 +77,26 @@ async function saveDocumentImmediately(
   content: string,
   sharedAccess?: SharedAccess,
 ) {
-  const res = await fetch(`/api/documents/${documentId}/autosave`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      content,
-      shareId: sharedAccess?.shareId,
-    }),
-  })
+  const res = await fetch(
+    `/api/documents/${documentId}/autosave`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        shareId: sharedAccess?.shareId,
+      }),
+    },
+  )
 
   if (!res.ok) {
     const data = await res.json().catch(() => null)
-    throw new Error(data?.message ?? '즉시 저장에 실패했습니다.')
+
+    throw new Error(
+      data?.message ?? '즉시 저장에 실패했습니다.',
+    )
   }
 }
 
@@ -79,19 +109,26 @@ async function runAI(
   sharedAccess?: SharedAccess,
 ) {
   const insertFrom = commandFrom
-  const insertTo = commandFrom + AI_LOADING_TEXT.length
 
   editor
     .chain()
     .focus()
-    .deleteRange({ from: commandFrom, to: commandTo })
-    .insertContentAt(commandFrom, AI_LOADING_TEXT)
+    .deleteRange({
+      from: commandFrom,
+      to: commandTo,
+    })
+    .insertContentAt(
+      commandFrom,
+      AI_LOADING_TEXT,
+    )
     .run()
 
   try {
     const res = await fetch('/api/ai/draft', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         documentId,
         prompt,
@@ -102,51 +139,83 @@ async function runAI(
 
     if (!res.ok) {
       const data = await res.json().catch(() => null)
-      throw new Error(data?.message ?? 'AI 요청 실패')
+
+      throw new Error(
+        data?.message ?? 'AI 요청 실패',
+      )
     }
 
     if (!res.body) {
-      throw new Error('AI 응답이 비어 있습니다.')
+      throw new Error(
+        'AI 응답이 비어 있습니다.',
+      )
     }
 
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
+
     let result = ''
 
     while (true) {
       const { done, value } = await reader.read()
-      if (done) break
-      result += decoder.decode(value, { stream: true })
+
+      if (done) {
+        break
+      }
+
+      result += decoder.decode(value, {
+        stream: true,
+      })
     }
+
+    const docText = editor.state.doc.textBetween(
+      0,
+      editor.state.doc.content.size,
+      '\n',
+      '\n',
+    )
+
+    const loadingOffset =
+      docText.indexOf(AI_LOADING_TEXT)
+
+    const replaceFrom =
+      loadingOffset >= 0
+        ? loadingOffset + 1
+        : insertFrom
 
     editor
       .chain()
       .focus()
-      .deleteRange({ from: insertFrom, to: insertTo })
-      .insertContentAt(insertFrom, result.trim() || '')
+      .deleteRange({
+        from: replaceFrom,
+        to:
+          replaceFrom +
+          AI_LOADING_TEXT.length,
+      })
+      .insertContentAt(
+        replaceFrom,
+        result.trim(),
+      )
       .run()
 
     await saveDocumentImmediately(
       documentId,
-      stringifyEditorContent(editor.getJSON()),
+      stringifyEditorContent(
+        editor.getJSON(),
+      ),
       sharedAccess,
     )
   } catch (error) {
     const message =
-      error instanceof Error ? `AI 생성 실패: ${error.message}` : 'AI 생성 실패'
+      error instanceof Error
+        ? `AI 생성 실패: ${error.message}`
+        : 'AI 생성 실패'
 
     editor
       .chain()
       .focus()
-      .deleteRange({ from: insertFrom, to: insertTo })
-      .insertContentAt(insertFrom, message)
+      .insertContent(message)
       .run()
-
-    await saveDocumentImmediately(
-      documentId,
-      stringifyEditorContent(editor.getJSON()),
-      sharedAccess,
-    )
   }
 }
 
@@ -156,21 +225,20 @@ export function useEditorInstance({
   sharedAccess,
   onUpdate,
 }: Props) {
-  const room = `document:${documentId}`
-  const hasInitializedRef = useRef(false)
+  const initializedRef = useRef(false)
   const editorRef = useRef<Editor | null>(null)
 
-  const { provider, ydoc, synced } = useYjsProvider({
-    room,
-    documentId,
-    sharedAccess,
-  })
+  const {
+    provider,
+    ydoc,
+  } = useDocumentCollaboration()
 
   const extensions = useMemo(() => {
     return createTiptapExtensions({
       ydoc,
       field: 'body',
-      placeholder: '문서를 입력하거나 /ai 로 AI에게 요청하세요...',
+      placeholder:
+        '문서를 입력하거나 /ai 로 AI에게 요청하세요...',
       enableAI: true,
     }) as any[]
   }, [ydoc])
@@ -179,22 +247,36 @@ export function useEditorInstance({
     {
       immediatelyRender: false,
       extensions,
-      editable: false,
+      editable: true,
+
       editorProps: {
         attributes: {
           class:
             'min-h-[460px] rounded-xl p-4 outline-none prose prose-sm max-w-none',
         },
+
         handleKeyDown(_view, event) {
-          const currentEditor = editorRef.current
+          const currentEditor =
+            editorRef.current
 
-          if (!currentEditor) return false
-          if (event.key !== 'Enter') return false
-          if (event.shiftKey) return false
-          if (event.isComposing) return false
+          if (!currentEditor) {
+            return false
+          }
 
-          const command = extractAICommand(currentEditor)
-          if (!command) return false
+          if (
+            event.key !== 'Enter' ||
+            event.shiftKey ||
+            event.isComposing
+          ) {
+            return false
+          }
+
+          const command =
+            extractAICommand(currentEditor)
+
+          if (!command) {
+            return false
+          }
 
           event.preventDefault()
 
@@ -210,8 +292,13 @@ export function useEditorInstance({
           return true
         },
       },
+
       onUpdate({ editor }) {
-        onUpdate?.(stringifyEditorContent(editor.getJSON()))
+        onUpdate?.(
+          stringifyEditorContent(
+            editor.getJSON(),
+          ),
+        )
       },
     },
     [ydoc],
@@ -234,28 +321,39 @@ export function useEditorInstance({
   }, [editor])
 
   useEffect(() => {
-    if (!editor) return
-    if (!provider) return
-    if (!synced) return
-
-    editor.setEditable(true)
-  }, [editor, provider, synced])
+    initializedRef.current = false
+  }, [documentId])
 
   useEffect(() => {
-    if (!editor) return
-    if (!provider) return
-    if (!synced) return
-    if (hasInitializedRef.current) return
+    if (!editor) {
+      return
+    }
 
-    hasInitializedRef.current = true
+    if (initializedRef.current) {
+      return
+    }
 
-    if (!editor.isEmpty) return
-    if (!initialContent) return
+    initializedRef.current = true
 
-    editor.commands.setContent(parseEditorContent(initialContent), {
-      emitUpdate: true,
-    })
-  }, [editor, provider, synced, initialContent])
+    /*
+     * provider 동기화가 끝난 후 에디터가 마운트되므로
+     * Yjs body가 비어 있을 때만 DB 본문을 초기값으로 사용한다.
+     */
+    if (!editor.isEmpty || !initialContent) {
+      return
+    }
+
+    editor.commands.setContent(
+      parseEditorContent(initialContent),
+      {
+        emitUpdate: true,
+      },
+    )
+  }, [
+    editor,
+    documentId,
+    initialContent,
+  ])
 
   return {
     editor,
