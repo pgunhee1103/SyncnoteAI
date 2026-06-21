@@ -31,11 +31,28 @@ button {
 }
 
 .ProseMirror {
-  min-height: 460px;
+  /*min-height: 400px;*/
   outline: none;
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.7;
+}
+
+/* 본문 에디터에만 적용 */
+.body-editor .ProseMirror {
+  min-height: 460px;
+}
+
+/* 제목 에디터에만 적용 */
+.title-editor .ProseMirror {
+  min-height: 36px;
+  padding: 2px 4px;
+  line-height: 1.25;
+}
+
+.title-editor .ProseMirror p {
+  margin: 0;
+  line-height: 1.25;
 }
 
 .ProseMirror p {

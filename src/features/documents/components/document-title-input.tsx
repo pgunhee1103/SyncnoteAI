@@ -93,7 +93,7 @@ export function DocumentTitleInput({
       editorProps: {
         attributes: {
           class:
-            'min-h-[48px] rounded-xl border border-transparent bg-transparent px-1 py-2 text-3xl font-bold tracking-tight text-gray-900 outline-none transition focus:border-gray-200 focus:bg-gray-50',
+            '!max-h-[100px] w-full rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-2xl font-bold tracking-tight text-gray-900 outline-none transition focus:border-gray-200 focus:bg-gray-50',
         },
 
         handleKeyDown(_view, event) {
@@ -276,7 +276,7 @@ export function DocumentTitleInput({
   }
 
   return (
-    <div className="relative">
+     <div className="title-editor relative w-full">
       <AwarenessCursors
         editor={editor}
         provider={provider}

@@ -17,7 +17,7 @@ export function TiptapEditor({ editor, provider }: Props) {
   }
 
   return (
-    <div className="relative rounded-2xl border border-gray-200 bg-white">
+    <div className="body-editor relative rounded-2xl border border-gray-200 bg-white">
       <AwarenessCursors editor={editor} provider={provider} field="body" />
       <EditorContent editor={editor} />
     </div>
