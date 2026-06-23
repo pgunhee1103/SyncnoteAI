@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch server.ts",
+    "dev": "concurrently -k -n WEB,COLLAB \"pnpm dev:web\" \"pnpm dev:collab\"",
+    "dev:web": "next dev",
+    "dev:collab": "tsx watch collaboration-server.ts",
+
     "build": "next build",
-    "start": "cross-env NODE_ENV=production tsx server.ts",
+
+    "start": "concurrently -k -n WEB,COLLAB \"pnpm start:web\" \"pnpm start:collab\"",
+    "start:web": "next start",
+    "start:collab": "cross-env NODE_ENV=production tsx collaboration-server.ts",
+
     "lint": "next lint"
   },
   "dependencies": {
@@ -34,6 +41,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.3",
     "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
