@@ -38,8 +38,8 @@ New-Item "src/features/auth/server/auth.service.ts" -ItemType File -Force
 # api
 New-Item "src/app/api/auth/login/route.ts" -ItemType File -Force
 
-# middleware
-New-Item "src/middleware.ts" -ItemType File -Force
+# proxy
+New-Item "src/proxy.ts" -ItemType File -Force
 
 # socket.io
 pnpm add socket.io socket.io-client

@@ -3,7 +3,7 @@ import { SESSION_COOKIE_NAME } from '@/server/auth/auth.constants'
 
 const PROTECTED_PREFIXES = ['/documents']
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) =>
