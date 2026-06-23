@@ -6,25 +6,22 @@
     "dev": "concurrently -k -n WEB,COLLAB \"pnpm dev:web\" \"pnpm dev:collab\"",
     "dev:web": "next dev",
     "dev:collab": "tsx watch collaboration-server.ts",
-
     "build": "next build",
-
     "start": "concurrently -k -n WEB,COLLAB \"pnpm start:web\" \"pnpm start:collab\"",
     "start:web": "next start",
     "start:collab": "cross-env NODE_ENV=production tsx collaboration-server.ts",
-
     "lint": "next lint"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
     "@tanstack/react-query": "^5.95.2",
-    "@tiptap/core": "3.20.5",
-    "@tiptap/extension-collaboration": "3.20.5",
-    "@tiptap/extension-image": "3.20.5",
-    "@tiptap/extension-placeholder": "3.20.5",
-    "@tiptap/pm": "3.20.5",
-    "@tiptap/react": "3.20.5",
-    "@tiptap/starter-kit": "3.20.5",
+    "@tiptap/core": "3.27.1",
+    "@tiptap/extension-collaboration": "3.27.1",
+    "@tiptap/extension-image": "3.27.1",
+    "@tiptap/extension-placeholder": "3.27.1",
+    "@tiptap/pm": "3.27.1",
+    "@tiptap/react": "3.27.1",
+    "@tiptap/starter-kit": "3.27.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "next": "16.2.1",
@@ -50,5 +47,11 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "@tiptap/core": "3.27.1",
+      "@tiptap/pm": "3.27.1"
+    }
   }
 }

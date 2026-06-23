@@ -47,22 +47,3 @@ export function getSocket(): Socket {
 
   return socket
 }
-
-export function reconnectSocket(): void {
-  const currentSocket = getSocket()
-
-  if (currentSocket.connected) {
-    currentSocket.disconnect()
-  }
-
-  currentSocket.connect()
-}
-
-export function disconnectSocket(): void {
-  if (!socket) {
-    return
-  }
-
-  socket.disconnect()
-  socket = null
-}
