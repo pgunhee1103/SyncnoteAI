@@ -14,8 +14,9 @@ function getSessionExpiresAt(): Date {
   expiresAt.setDate(expiresAt.getDate() + SESSION_EXPIRES_DAYS)
   return expiresAt
 }
-
-export async function createSession(userId: string) {
+/* 이 모듈 내부에서만 사용하는 세션 생성 함수다.
+ * 외부에서는 createSessionForUser를 사용한다. */
+async function createSession(userId: string) {
   const token = createSessionToken()
   const expiresAt = getSessionExpiresAt()
 

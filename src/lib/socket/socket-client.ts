@@ -1,27 +1,3 @@
-// 'use client'
-
-// import { io, type Socket } from 'socket.io-client'
-
-// let socket: Socket | null = null
-
-// export function getSocket() {
-//   // 싱글톤 (Singleton) 패턴: 앱 전체에서 하나만 존재
-//   if (!socket) {
-//     // localhost:3000 서버랑 실시간 연결해줘
-//     socket = io('http://localhost:3001', {
-//       withCredentials: true,
-//       autoConnect: true,
-//       reconnection: true,
-//       reconnectionAttempts: 10,
-//       reconnectionDelay: 1000,
-//       reconnectionDelayMax: 5000,
-//       timeout: 10000,
-//     })
-//   }
-
-//   return socket
-// }
-
 'use client'
 
 import { io, type Socket } from 'socket.io-client'
@@ -50,23 +26,4 @@ export function getSocket(): Socket {
   }
 
   return socket
-}
-
-export function reconnectSocket(): void {
-  const currentSocket = getSocket()
-
-  if (currentSocket.connected) {
-    currentSocket.disconnect()
-  }
-
-  currentSocket.connect()
-}
-
-export function disconnectSocket(): void {
-  if (!socket) {
-    return
-  }
-
-  socket.disconnect()
-  socket = null
 }

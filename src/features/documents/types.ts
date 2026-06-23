@@ -30,15 +30,6 @@ export type DocumentsResponse = {
   documents: DocumentListItem[]
 }
 
-export type DocumentResponse = {
-  document: DocumentDetail
-}
-
-export type UpdateTitleResponse = {
-  message: string
-  document: DocumentDetail
-}
-
 export type ShareDocumentResponse = {
   message: string
   document: DocumentDetail
