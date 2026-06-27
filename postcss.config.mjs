@@ -4,4 +4,4 @@ const config = {
   },
 };
 
-export default configAX  ;
+export default config;

@@ -47,11 +47,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
-  },
-  "pnpm": {
-    "overrides": {
-      "@tiptap/core": "3.27.1",
-      "@tiptap/pm": "3.27.1"
-    }
   }
 }

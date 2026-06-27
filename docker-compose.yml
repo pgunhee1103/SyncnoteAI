@@ -1,0 +1,24 @@
+services:
+  syncnote:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: syncnote-ai
+
+    env_file:
+      - .env.docker
+
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+
+    volumes:
+      - syncnote-data:/data
+        # - ./prisma/dev.db:/data/dev.db (로컬 db 데이터 가져올때)
+
+    restart: unless-stopped
+
+# 이 이름의 볼륨을 Docker가 관리하게 해라 (이름등록 역할)
+volumes:
+  syncnote-data:
