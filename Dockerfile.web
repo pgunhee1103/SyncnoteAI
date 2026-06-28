@@ -11,18 +11,20 @@ RUN apt-get update \
 RUN corepack enable \
   && pnpm --version
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 
-RUN pnpm install --frozen-lockfile
+ARG PRISMA_BUILD_DATABASE_URL="postgresql://user:password@localhost:5432/syncnote?schema=public"
+
+RUN DATABASE_URL="${PRISMA_BUILD_DATABASE_URL}" pnpm install --frozen-lockfile
 
 COPY . .
 
 ARG NEXT_PUBLIC_COLLABORATION_URL
 ENV NEXT_PUBLIC_COLLABORATION_URL=${NEXT_PUBLIC_COLLABORATION_URL}
 
-RUN pnpm exec prisma generate
-RUN pnpm build
+RUN DATABASE_URL="${PRISMA_BUILD_DATABASE_URL}" pnpm exec prisma generate
+RUN DATABASE_URL="${PRISMA_BUILD_DATABASE_URL}" pnpm build
 
 EXPOSE 3000
 
