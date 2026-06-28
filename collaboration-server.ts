@@ -10,8 +10,12 @@ import { Server as SocketIOServer } from 'socket.io'
 if (existsSync('.env')) {
   loadEnvFile('.env')
 }
-
-const port = Number(process.env.COLLABORATION_PORT ?? 3001)
+// Render Web Service는 외부 요청을 받으려면 0.0.0.0에 bind하고, Render가 제공하는 포트를 사용해야 함
+const port = Number(
+  process.env.PORT ??
+    process.env.COLLABORATION_PORT ??
+    3001,
+)
 const host = process.env.COLLABORATION_HOST ?? '0.0.0.0'
 
 const allowedOrigins = (

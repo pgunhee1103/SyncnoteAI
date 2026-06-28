@@ -1,0 +1,26 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+ARG NEXT_PUBLIC_COLLABORATION_URL
+ENV NEXT_PUBLIC_COLLABORATION_URL=${NEXT_PUBLIC_COLLABORATION_URL}
+
+RUN pnpm exec prisma generate
+RUN pnpm build
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "pnpm exec prisma db push && pnpm start:web"]

@@ -7,10 +7,10 @@
     "dev:web": "next dev",
     "dev:collab": "tsx watch collaboration-server.ts",
     "build": "next build",
-    "start": "concurrently -k -n WEB,COLLAB \"pnpm start:web\" \"pnpm start:collab\"",
-    "start:web": "next start",
+    "start:web": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "start:collab": "cross-env NODE_ENV=production tsx collaboration-server.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
@@ -29,6 +29,7 @@
     "react-dom": "19.2.4",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "tsx": "^4.22.4",
     "y-protocols": "1.0.7",
     "yjs": "13.6.31",
     "zod": "^4.3.6"
@@ -45,7 +46,6 @@
     "postcss": "^8.5.15",
     "prisma": "^6.19.2",
     "tailwindcss": "^4",
-    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
