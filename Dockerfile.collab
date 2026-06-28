@@ -9,6 +9,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable \
+  && corepack prepare pnpm@11.9.0 --activate \
   && pnpm --version
 
 COPY package.json pnpm-lock.yaml ./
